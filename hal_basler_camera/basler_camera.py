@@ -26,16 +26,10 @@ class BaslerCameraNode(Node):
 
         self.bridge = CvBridge()
         self.frame = []
-        self.start_acquisition = True
-
-        self.thread1 = threading.Thread(target=self.get_frame, daemon=True)
-        self.thread1.start()
+        self.acquire_frames = True
 
         self.declare_parameter("publishers.raw_frame", "/camera/raw_frame")
         self.raw_frame_topic = self.get_parameter("publishers.raw_frame").value
-
-        self.declare_parameter("services.stop_camera", "/camera/stop_camera")
-        self.stop_cam_service = self.get_parameter("services.stop_camera").value
 
         self.declare_parameter("rotation_angle", "0.0")
         self.rotation_angle = float(self.get_parameter("rotation_angle").value)
@@ -43,30 +37,39 @@ class BaslerCameraNode(Node):
         self.declare_parameter("frames.camera_link", "camera_link")
         self.camera_link = self.get_parameter("frames.camera_link").value
 
-        self.declare_parameter("camera_ip", "192.168.20.10")
+        self.declare_parameter("camera_ip", "auto")
         self.camera_ip = self.get_parameter("camera_ip").value
         
-        # Publishers
         self.frame_pub = self.create_publisher(Image, self.raw_frame_topic, 1)
+
+        # converting to opencv bgr format
+        self.converter = pylon.ImageFormatConverter()
+        self.converter.OutputPixelFormat = pylon.PixelType_BGR8packed
+        self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
+
+        self.thread1 = threading.Thread(target=self.get_frame, daemon=True)
+        self.thread1.start()
 
         self.get_logger().info("[Basler Camera] Node Ready")
 
 
-    def get_camera(self):
-
-
+    def open_camera(self):
         # Get the transport layer factory.
         tlFactory = pylon.TlFactory.GetInstance()
 
         # Get all attached devices and exit application if no device is found.
         devices = tlFactory.EnumerateDevices()
         if len(devices) == 0:
-            raise pylon.RuntimeException("No camera present.")
+            self.get_logger().info("No camera present. Check Connection.")
+            return False
+
+        if self.camera_ip == "auto":
+            self.get_logger().info("Using First Camera Available")
+            self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+            return True
 
         # Create an array of instant cameras for the found devices and avoid exceeding a maximum number of devices.
-        cameras = pylon.InstantCameraArray(min(len(devices), 2))
-
-        l = cameras.GetSize()
+        cameras = pylon.InstantCameraArray(min(len(devices), 10))
 
         found = False
         i_found = 0
@@ -77,23 +80,17 @@ class BaslerCameraNode(Node):
             # Print the model name of the camera.
 
             if(cam.GetDeviceInfo().GetIpAddress() == self.camera_ip):
-                self.get_logger().info("Using device {0}".format(cam.GetDeviceInfo().GetIpAddress()))
+                self.get_logger().info("Using device with IP {0}".format(cam.GetDeviceInfo().GetIpAddress()))
                 found = True
                 i_found = i
 
         if found:
-            
             self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateDevice(devices[i_found]))
 
             self.camera.Open()
             self.camera.GevSCPSPacketSize.SetValue(1000)
         
             self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly) 
-            self.converter = pylon.ImageFormatConverter()
-
-            # converting to opencv bgr format
-            self.converter.OutputPixelFormat = pylon.PixelType_BGR8packed
-            self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
             
             return True
 
@@ -103,9 +100,9 @@ class BaslerCameraNode(Node):
     # This function save the current frame in a class attribute
     def get_frame(self):
 
-        if self.get_camera():
+        if self.open_camera():
 
-            while self.camera.IsGrabbing():
+            while self.acquire_frames and self.camera.IsGrabbing():
             
                 grabResult = self.camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
@@ -126,7 +123,7 @@ class BaslerCameraNode(Node):
 
 
     def exit(self):
-        self.start_acquisition = False
+        self.acquire_frames = False
         self.thread1.join()
 
 

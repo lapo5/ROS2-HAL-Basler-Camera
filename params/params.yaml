@@ -3,9 +3,6 @@ basler_camera:
     publishers:
       raw_frame: /camera/raw_frame
 
-    services:
-      stop_camera: /camera/get_cam_state
-
     frames: 
       camera_link: camera_link
       

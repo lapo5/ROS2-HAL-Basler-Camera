@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import setup
 
-package_name = 'basler_camera'
+package_name = 'hal_basler_camera'
 
 setup(
     name=package_name,
@@ -15,18 +15,16 @@ setup(
         (os.path.join('share', package_name, 'calibration'), glob('calibration/*.json')),
         (os.path.join('share', package_name, 'params'), glob('params/*.yaml')),
         (os.path.join('share', package_name), glob('launch/*.launch.py')),
-       
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='Marco Lapolla',
     maintainer_email='marco.lapolla5@gmail.com',
-    description='HAL for AV Camera',
+    description='HAL for Basler Camera',
     license='BSD',
     entry_points={
         'console_scripts': [
-        "basler_camera = basler_camera.basler_camera:main",       
-        
+        "basler_camera = hal_basler_camera.basler_camera:main",       
         ],
     },
 )

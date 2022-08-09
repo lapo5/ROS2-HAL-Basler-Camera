@@ -14,12 +14,11 @@ from launch.actions.execute_process import ExecuteProcess
 
 def generate_launch_description():
 
-    params = os.path.join(get_package_share_directory("basler_camera"), 'params', 'params.yaml')
+    params = os.path.join(get_package_share_directory("hal_basler_camera"), 'params', 'params.yaml')
     
-
     return LaunchDescription([
         Node(
-            package='basler_camera',
+            package='hal_basler_camera',
             executable='basler_camera',
             name='basler_camera',
             output={

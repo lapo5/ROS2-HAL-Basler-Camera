@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>basler_camera</name>
+  <name>hal_basler_camera</name>
   <version>0.0.0</version>
   <description>HAL for Camera Basler</description>
-  <maintainer email="alessandro.scarciglia-somministrato@thalesaleniaspace.com">Alessandro Scarciglia</maintainer>
+  <maintainer email="marco.lapolla5@gmail.com">Marco Lapolla</maintainer>
   <license>BSD</license>
 
   <depend>rclpy</depend>
