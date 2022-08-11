@@ -121,7 +121,6 @@ class BaslerCameraNode(Node):
             self.get_logger().info("[Basler Camera] No AV Camera Found. Check Connection.")
 
 
-
     def exit(self):
         self.acquire_frames = False
         self.thread1.join()
@@ -145,7 +144,6 @@ class BaslerCameraNode(Node):
         self.image_message.header.stamp = self.get_clock().now().to_msg()
         self.image_message.header.frame_id = self.camera_link
         self.frame_pub.publish(self.image_message)
-
 
 
 # Main loop function
