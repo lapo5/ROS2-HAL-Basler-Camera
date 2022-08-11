@@ -146,7 +146,7 @@ class BaslerCameraNode(Node):
         self.frame_pub.publish(self.image_message)
 
 
-# Main loop function
+##### Main Function #####
 def main(args=None):
 
     rclpy.init(args=args)
@@ -164,6 +164,5 @@ def main(args=None):
         rclpy.shutdown() 
 
 
-# Main
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
