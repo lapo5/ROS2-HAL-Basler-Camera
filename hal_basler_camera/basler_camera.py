@@ -16,8 +16,8 @@ from cv_bridge import CvBridge
 
 from pypylon import pylon
 
+MAX_DEVICES = 10
 
-# Class definition of the calibration function
 class BaslerCameraNode(Node):
     def __init__(self):
         super().__init__("basler_cam_node")
@@ -39,6 +39,28 @@ class BaslerCameraNode(Node):
 
         self.declare_parameter("camera_ip", "auto")
         self.camera_ip = self.get_parameter("camera_ip").value
+
+        self.declare_parameter("resize.enable", False)
+        self.need_to_resize_image = self.get_parameter("resize.enable").value
+
+        self.declare_parameter("crop.enable", False)
+        self.need_to_crop_image = self.get_parameter("crop.enable").value
+
+        if self.need_to_crop_image:
+            self.declare_parameter("crop.cropped_width", 0)
+            self.cropped_width = self.get_parameter("crop.cropped_width").value
+            self.declare_parameter("crop.cropped_height", 0)
+            self.cropped_height = self.get_parameter("crop.cropped_height").value
+
+        if self.need_to_resize_image:
+            self.declare_parameter("resize.resized_width", 0)
+            self.resized_width = self.get_parameter("resize.resized_width").value
+            self.declare_parameter("resize.resized_height", 0)
+            self.resized_height = self.get_parameter("resize.resized_height").value
+            width = int(self.resized_width)
+            height = int(self.resized_height)
+            self.resized_dim = (width, height)
+            self.get_logger().info("[Basler Camera] Resize required with dimensions: {0}".format(self.resized_dim))
         
         self.frame_pub = self.create_publisher(Image, self.raw_frame_topic, 1)
 
@@ -60,22 +82,23 @@ class BaslerCameraNode(Node):
         # Get all attached devices and exit application if no device is found.
         devices = tlFactory.EnumerateDevices()
         if len(devices) == 0:
-            self.get_logger().info("No camera present. Check Connection.")
+            self.get_logger().info("[Basler Camera] No camera present. Check Connection.")
             return False
 
         if self.camera_ip == "auto":
-            self.get_logger().info("Using First Camera Available")
+            self.get_logger().info("[Basler Camera] Using First Camera Available")
             self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
             return True
 
         # Create an array of instant cameras for the found devices and avoid exceeding a maximum number of devices.
-        cameras = pylon.InstantCameraArray(min(len(devices), 10))
+        cameras = pylon.InstantCameraArray(min(len(devices), MAX_DEVICES))
 
         found = False
         i_found = 0
 
         # Create and attach all Pylon Devices.
         for i, cam in enumerate(cameras):
+
             cam.Attach(tlFactory.CreateDevice(devices[i]))
             # Print the model name of the camera.
 
@@ -85,19 +108,18 @@ class BaslerCameraNode(Node):
                 i_found = i
 
         if found:
+
             self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateDevice(devices[i_found]))
 
             self.camera.Open()
             self.camera.GevSCPSPacketSize.SetValue(1000)
-        
             self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly) 
-            
             return True
 
         else:
             return False
 
-    # This function save the current frame in a class attribute
+
     def get_frame(self):
 
         if self.open_camera():
@@ -107,7 +129,6 @@ class BaslerCameraNode(Node):
                 grabResult = self.camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
                 if grabResult.GrabSucceeded():
-                    # Access the image data
                     try:
                         image = self.converter.Convert(grabResult)
                         self.frame = image.GetArray()
@@ -131,6 +152,20 @@ class BaslerCameraNode(Node):
         if len(self.frame) == 0:
             self.get_logger().info("[Basler Camera] No Image Returned")
             return
+
+        if self.need_to_crop_image:
+            cur_height, cur_width, _ = self.frame.shape
+
+            delta_width = int((cur_width - self.cropped_width) / 2.0)
+            delta_height = int((cur_height - self.cropped_height) / 2.0)
+
+            self.frame = self.frame[delta_height:(cur_height-delta_height), delta_width:(cur_width-delta_width)]
+            self.get_logger().info("[Basler Camera] Image Cropped. New shape: {0}".format(self.frame.shape))
+        
+
+        if self.need_to_resize_image:
+            self.frame = cv.resize(self.frame, self.resized_dim, interpolation = cv.INTER_AREA)
+
 
         if self.rotation_angle != 0.0:
             image_center = tuple(np.array(self.frame.shape[1::-1]) / 2)
