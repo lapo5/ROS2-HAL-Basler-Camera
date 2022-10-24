@@ -40,8 +40,6 @@ class BaslerCameraNode(Node):
         self.declare_parameter("camera_ip", "auto")
         self.camera_ip = self.get_parameter("camera_ip").value
 
-        self.declare_parameter("resize.enable", False)
-        self.need_to_resize_image = self.get_parameter("resize.enable").value
 
         self.declare_parameter("crop.enable", False)
         self.need_to_crop_image = self.get_parameter("crop.enable").value
@@ -52,6 +50,8 @@ class BaslerCameraNode(Node):
             self.declare_parameter("crop.cropped_height", 0)
             self.cropped_height = self.get_parameter("crop.cropped_height").value
 
+        self.declare_parameter("resize.enable", False)
+        self.need_to_resize_image = self.get_parameter("resize.enable").value
         if self.need_to_resize_image:
             self.declare_parameter("resize.resized_width", 0)
             self.resized_width = self.get_parameter("resize.resized_width").value
@@ -139,7 +139,7 @@ class BaslerCameraNode(Node):
             grabResult.Release()
 
         else:
-            self.get_logger().info("[Basler Camera] No AV Camera Found. Check Connection.")
+            self.get_logger().info("[Basler Camera] No Basler Camera Found. Check Connection.")
 
 
     def exit(self):
