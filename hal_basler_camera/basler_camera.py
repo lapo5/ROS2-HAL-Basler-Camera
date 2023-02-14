@@ -88,6 +88,7 @@ class BaslerCameraNode(Node):
         if self.camera_ip == "auto":
             self.get_logger().info("[Basler Camera] Using First Camera Available")
             self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+            
             return True
 
         # Create an array of instant cameras for the found devices and avoid exceeding a maximum number of devices.
@@ -111,9 +112,6 @@ class BaslerCameraNode(Node):
 
             self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateDevice(devices[i_found]))
 
-            self.camera.Open()
-            self.camera.GevSCPSPacketSize.SetValue(1000)
-            self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly) 
             return True
 
         else:
@@ -124,11 +122,18 @@ class BaslerCameraNode(Node):
 
         if self.open_camera():
 
+            self.camera.Open()
+            self.camera.GevSCPSPacketSize.SetValue(1000)
+            self.camera.ExposureAuto.SetValue("Off")
+            self.camera.ExposureTimeAbs.SetValue(20000)
+
+            self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly) 
+
             while self.acquire_frames and self.camera.IsGrabbing():
             
                 grabResult = self.camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
-                if grabResult.GrabSucceeded():
+                if grabResult is not None and grabResult.GrabSucceeded():
                     try:
                         image = self.converter.Convert(grabResult)
                         self.frame = image.GetArray()

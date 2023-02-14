@@ -7,3 +7,5 @@ basler_camera:
       camera_link: camera_link
       
     rotation_angle: 0.0
+
+    camera_ip: 192.168.20.11
