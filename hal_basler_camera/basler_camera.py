@@ -200,8 +200,6 @@ def main(args=None):
         node.get_logger().info('[Basler Camera] Exception:', file=sys.stderr)
         node.exit()
         raise
-    finally:
-        rclpy.shutdown() 
 
 
 if __name__ == "__main__":
