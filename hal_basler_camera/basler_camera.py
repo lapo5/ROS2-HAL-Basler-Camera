@@ -31,8 +31,8 @@ class BaslerCameraNode(Node):
         self.declare_parameter("publishers.raw_frame", "/camera/raw_frame")
         self.raw_frame_topic = self.get_parameter("publishers.raw_frame").value
 
-        self.declare_parameter("rotation_angle", "0.0")
-        self.rotation_angle = float(self.get_parameter("rotation_angle").value)
+        self.declare_parameter("rotation_angle", 0.0)
+        self.rotation_angle = self.get_parameter("rotation_angle").value
 
         self.declare_parameter("frames.camera_link", "camera_link")
         self.camera_link = self.get_parameter("frames.camera_link").value

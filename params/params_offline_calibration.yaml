@@ -6,9 +6,9 @@ offline_camera_calibration:
     chessboard_size: [7, 9]
     square_size: 30.0 # mm
 
-    image_size: [1024, 1024] # (width, height)
+    image_size: [512, 512] # (width, height)
     
-    images_path: /home/marco/xarm_devel/src/AA_Resources_Calibration/dlr_stereo_calibration/rescaled_1024/right/
-    calibration_path: /home/marco/xarm_devel/src/AA_Resources_Calibration/dlr_stereo_calibration/rescaled_1024/
+    images_path: /home/marco/erossp_ros2_devel/src/EROSSP_Pose_Estimation/dlr_new_calibration/right/
+    calibration_path: /home/marco/erossp_ros2_devel/src/EROSSP_Pose_Estimation/dlr_new_calibration/output_calibration/
 
     calibration_file: calib_cam_right.xml
